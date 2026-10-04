@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">L MOK Music</string>
+    <string name="title_activity_main">L MOK Music</string>
+    <string name="package_name">com.lmok.musicapp</string>
+    <string name="custom_url_scheme">com.lmok.musicapp</string>
+</resources>

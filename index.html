@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ha">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L MOK Music Album App</title>
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: lightpink;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .player-card {
+      width: 100%;
+      max-width: 380px;
+      background: #181824;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 4px solid #272732;
+    }
+    .album-art-box {
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(245, 158, 11, 0.3);
+      background: #272732;
+    }
+    .album-art-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .track-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .track-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #fafafa;
+    }
+    .artist-name {
+      font-size: 13px;
+      color: #a1a1aa;
+    }
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: #272732;
+      border-radius: 3px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: pink;
+      border-radius: 3px;
+      transition: width 0.1s linear;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .btn-ctrl {
+      background: pink;
+      color: #181824;
+      border: none;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .btn-ctrl:hover { 
+      background: orange; 
+      color: white; 
+    }
+    .btn-play {
+      width: 60px;
+      height: 60px;
+      background: orange;
+      color: white;
+      font-size: 22px;
+    }
+    .playlist {
+      border-top: 1px solid #272732;
+      padding-top: 15px;
+    }
+    .playlist h3 {
+      font-size: 14px;
+      color: #a1a1aa;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .playlist-item {
+      padding: 10px;
+      background: #1f1f2b;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .playlist-item:hover, .playlist-item.active {
+      border: 2px solid pink;
+      background: linear-gradient(135deg, #f59e0b, pink);
+      color: #000;
+    }
+    .playlist-item.active span {
+      color: #000 !important;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="player-card">
+    <div class="album-art-box">
+      <img id="albumArtIcon" src="image.jpg" alt="Album Art">
+    </div>
+
+    <div class="track-info">
+      <div class="track-title" id="trackTitle">Zabi Waƙa</div>
+      <div class="artist-name" id="artistName">L MOK</div>
+    </div>
+
+    <div class="progress-container" id="progressContainer" onclick="setProgress(event)">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-ctrl" onclick="prevTrack()">⏮</button>
+      <button class="btn-ctrl btn-play" id="playBtn" onclick="togglePlay()">▶</button>
+      <button class="btn-ctrl" onclick="nextTrack()">⏭</button>
+    </div>
+
+    <div class="playlist">
+      <h3>Playlist (Wakokin L MOK)</h3>
+      <div id="playlistContainer"></div>
+    </div>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+    const songs = [
+      { title: "ABIR KAUNA", artist: "L MOK", src: "track1.mp3" },
+      { title: "BOSS", artist: "L MOK", src: "track2.mp3" },
+      { title: "DA MUN ISO", artist: "L MOK", src: "track3.mp3" },
+      { title: "DARE", artist: "L MOK", src: "track4.mp3" },
+      { title: "DOKA SARKI", artist: "L MOK", src: "track5.mp3" },
+      { title: "GA KWANO SAIDAI LAMBA", artist: "L MOK", src: "track6.mp3" },
+      { title: "KALKUCIMMINI", artist: "L MOK", src: "track7.mp3" },
+      { title: "DA NA KOWANE", artist: "L MOK", src: "track8.mp3" },
+      { title: "MC KULTCHA", artist: "L MOK", src: "track9.mp3" },
+      { title: "SARAUTA", artist: "L MOK", src: "track10.mp3" }
+    ];
+
+    let currentTrackIndex = 0;
+    const audio = document.getElementById('audioPlayer');
+    const trackTitle = document.getElementById('trackTitle');
+    const artistName = document.getElementById('artistName');
+    const playBtn = document.getElementById('playBtn');
+    const progressBar = document.getElementById('progressBar');
+    const playlistContainer = document.getElementById('playlistContainer');
+
+    function loadPlaylist() {
+      playlistContainer.innerHTML = "";
+      songs.forEach((song, index) => {
+        const div = document.createElement('div');
+        div.className = `playlist-item ${index === currentTrackIndex ? 'active' : ''}`;
+        div.innerHTML = `<span>${song.title}</span><span style="font-size:11px; color:#a1a1aa;">${song.artist}</span>`;
+        div.onclick = () => {
+          currentTrackIndex = index;
+          playSong();
+        };
+        playlistContainer.appendChild(div);
+      });
+    }
+
+    function loadSong(index) {
+      trackTitle.innerText = songs[index].title;
+      artistName.innerText = songs[index].artist;
+      audio.src = songs[index].src;
+      loadPlaylist();
+    }
+
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play();
+        playBtn.innerText = "⏸";
+      } else {
+        audio.pause();
+        playBtn.innerText = "▶";
+      }
+    }
+
+    function playSong() {
+      loadSong(currentTrackIndex);
+      audio.play();
+      playBtn.innerText = "⏸";
+    }
+
+    function nextTrack() {
+      currentTrackIndex = (currentTrackIndex + 1) % songs.length;
+      playSong();
+    }
+
+    function prevTrack() {
+      currentTrackIndex = (currentTrackIndex - 1 + songs.length) % songs.length;
+      playSong();
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      if(audio.duration) {
+        const progressPercent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+      }
+    });
+
+    function setProgress(e) {
+      const width = e.currentTarget.clientWidth;
+      const clickX = e.offsetX;
+      const duration = audio.duration;
+      if (duration) {
+        audio.currentTime = (clickX / width) * duration;
+      }
+    }
+
+    audio.addEventListener('ended', () => {
+      nextTrack();
+    });
+
+    // Load first song on start
+    loadSong(currentTrackIndex);
+  </script>
+</body>
+</html>
